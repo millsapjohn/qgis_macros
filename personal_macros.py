@@ -10,16 +10,18 @@ def personal_openProject():
 
     project = QgsProject.instance()
     if QgsExpressionContextUtils.projectScope(project).variable('project_gpkg_connections'):
-        proj_conn = QgsExpressionContextUtils.projectScope(project).variable('project_gpkg_connections')
+        proj_conn = QgsExpressionContextUtils.projectScope(project).variable('project_gpkg_connections').split(";")
+        proj_uri = proj_conn[1::2]
+        proj_conn = proj_conn[0::2]
         md = QgsProviderRegistry.instance().providerMetadata('ogr')
-        if md.connections() != {}:
-            for key in md.connections().keys():
-                if key not in proj_conn.keys():
-                    md.deleteConnection(key)
-        for key in proj_conn.keys():
-            if key not in md.connections().keys():
-                conn = md.createConnection(proj_conn[key])
-                md.saveConnection(conn, key) 
+        if md.connections():
+            for item in md.connections():
+                if item not in proj_conn:
+                    md.deleteConnection(item)
+        for i in range(len(proj_conn) - 1):
+            if proj_conn[i] not in md.connections():
+                conn = md.createConnection(proj_uri[i])
+                md.saveConnection(conn, proj_conn[i]) 
         iface.reloadConnections()
 
 def personal_saveProject():
